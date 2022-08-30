@@ -7,7 +7,7 @@ import dateutil.parser
 import babel
 from flask import Flask, render_template, request, Response, flash, redirect, url_for
 from flask_moment import Moment
-from flask_sqlalchemy import SQLAlchemy, Column
+from flask_sqlalchemy import SQLAlchemy
 import logging
 from logging import Formatter, FileHandler
 from flask_wtf import Form
@@ -30,40 +30,40 @@ migrate = Migrate(app, db)
 
 class Venue(db.Model):
   __tablename__ = 'Venues'
-  id = Column(db.Integer, primary_key=True)
-  name = Column(db.String)
-  city = Column(db.String(120))
-  state = Column(db.String(120))
-  address = Column(db.String(120))
-  phone = Column(db.String(120))
-  image_link = Column(db.String(500))
-  facebook_link = Column(db.String(120))
-  venue_web_url = Column(db.String(120))
-  talent_description = Column(db.String(255))
-  seeking_talent = Column(db.Boolean, default=False)
+  id = db.Column(db.Integer, primary_key=True)
+  name = db.Column(db.String)
+  city = db.Column(db.String(120))
+  state = db.Column(db.String(120))
+  address = db.Column(db.String(120))
+  phone = db.Column(db.String(120))
+  image_link = db.Column(db.String(500))
+  facebook_link = db.Column(db.String(120))
+  venue_web_url = db.Column(db.String(120))
+  talent_description = db.Column(db.String(255))
+  seeking_talent = db.Column(db.Boolean, default=False)
   shows = db.relationship("Show", backref="Venue", lazy=True)
 
 class Artist(db.Model):
   __tablename__ = 'Artists'
-  id = Column(db.Integer, primary_key=True)
-  name = Column(db.String)
-  city = Column(db.String(120))
-  state = Column(db.String(120))
-  phone = Column(db.String(120))
-  genres = Column(db.String(120))
-  image_link = Column(db.String(500))
-  facebook_link = Column(db.String(120))
-  artist_web_url = Column(db.String(120))
-  artist_talent_description = Column(db.String(255))
-  artist_seeking_talent = Column(db.Boolean, default=False)
+  id = db.Column(db.Integer, primary_key=True)
+  name = db.Column(db.String)
+  city = db.Column(db.String(120))
+  state = db.Column(db.String(120))
+  phone = db.Column(db.String(120))
+  genres = db.Column(db.String(120))
+  image_link = db.Column(db.String(500))
+  facebook_link = db.Column(db.String(120))
+  artist_web_url = db.Column(db.String(120))
+  artist_talent_description = db.Column(db.String(255))
+  artist_seeking_talent = db.Column(db.Boolean, default=False)
 
 
 class Show(db.Model):
   __tablename__ = 'Shows'
-  id = Column(db.Integer, primary_key=True)
-  artist_id = Column(db.Integer, db.ForeignKey('artist.id'), nullable=False)
-  venue_id = Column(db.Integer, db.ForeignKey('venue.id'), nullable=False)
-  start_time = Column(db.DateTime, nullable=False)
+  id = db.Column(db.Integer, primary_key=True)
+  artist_id = db.Column(db.Integer, db.ForeignKey('artist.id'), nullable=False)
+  venue_id = db.Column(db.Integer, db.ForeignKey('venue.id'), nullable=False)
+  start_time = db.Column(db.DateTime, nullable=False)
 
 def format_datetime(value, format='medium'):
   date = dateutil.parser.parse(value)
