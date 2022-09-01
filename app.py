@@ -13,6 +13,7 @@ from logging import Formatter, FileHandler
 from flask_wtf import Form
 from forms import *
 from flask_migrate import Migrate
+from models import *
 #----------------------------------------------------------------------------#
 # App Config.
 #----------------------------------------------------------------------------#
@@ -24,56 +25,6 @@ db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 # TODO: connect to a local postgresql database
 
-#----------------------------------------------------------------------------#
-# Models.
-#----------------------------------------------------------------------------#
-
-class Venue(db.Model):
-  __tablename__ = 'Venues'
-  id = db.Column(db.Integer, primary_key=True)
-  name = db.Column(db.String)
-  city = db.Column(db.String(120))
-  state = db.Column(db.String(120))
-  address = db.Column(db.String(120))
-  phone = db.Column(db.String(120))
-  image_link = db.Column(db.String(500))
-  facebook_link = db.Column(db.String(120))
-  venue_web_url = db.Column(db.String(120))
-  talent_description = db.Column(db.String(255))
-  seeking_talent = db.Column(db.Boolean, default=False)
-  shows = db.relationship("Show", backref="Venue", lazy=True)
-
-class Artist(db.Model):
-  __tablename__ = 'Artists'
-  id = db.Column(db.Integer, primary_key=True)
-  name = db.Column(db.String)
-  city = db.Column(db.String(120))
-  state = db.Column(db.String(120))
-  phone = db.Column(db.String(120))
-  genres = db.Column(db.String(120))
-  image_link = db.Column(db.String(500))
-  facebook_link = db.Column(db.String(120))
-  artist_web_url = db.Column(db.String(120))
-  artist_talent_description = db.Column(db.String(255))
-  artist_seeking_talent = db.Column(db.Boolean, default=False)
-
-
-class Show(db.Model):
-  __tablename__ = 'Shows'
-  id = db.Column(db.Integer, primary_key=True)
-  artist_id = db.Column(db.Integer, db.ForeignKey('artist.id'), nullable=False)
-  venue_id = db.Column(db.Integer, db.ForeignKey('venue.id'), nullable=False)
-  start_time = db.Column(db.DateTime, nullable=False)
-
-def format_datetime(value, format='medium'):
-  date = dateutil.parser.parse(value)
-  if format == 'full':
-      format="EEEE MMMM, d, y 'at' h:mma"
-  elif format == 'medium':
-      format="EE MM, dd, y h:mma"
-  return babel.dates.format_datetime(date, format, locale='en')
-
-app.jinja_env.filters['datetime'] = format_datetime
 
 #----------------------------------------------------------------------------#
 # Controllers.
@@ -303,14 +254,30 @@ def show_artist(artist_id):
   artist = Artist.query.get(artist_id)
 
   artist_data = artist.to_dict()
-  previous_shows = list(filter(lambda x: x.start_time < datetime.today(), artist.shows))
-  future_shows = list(filter(lambda x: x.start_time >= datetime.today(), artist.shows))
   
-  previous_shows = list(map(lambda x: x.show_venue(), previous_shows))
-  future_shows = list(map(lambda x: x.show_venue(), future_shows))
+  future_shows = db.session.query(Show).join(Venue).filter(Show.artist_id==artist_id).filter(Show.start_time>datetime.now()).all()
+  future_shows_array = []
 
-  artist_data['previous_shows'] = previous_shows
-  artist_data['future_shows'] = future_shows
+  previous_show = db.session.query(Show).join(Venue).filter(Show.artist_id==artist_id).filter(Show.start_time<datetime.now()).all()
+  previous_show_array = []
+
+  for show in previous_show:
+    previous_show_array.append({
+      "artist_id": show['artist_id'],
+      "artist_name": show['artist'].name,
+      "artist_image_link": show['artist'].image_link,
+      "start_time": show['start_time'].strftime('%Y-%m-%d %H:%M:%S')
+    })
+
+  for show in future_shows:
+    future_shows_array.append({
+      "artist_id": show['artist_id'],
+      "artist_name": show['artist'].name,
+      "artist_image_link": show['artist'].image_link,
+      "start_time": show['start_time'].strftime("%Y-%m-%d %H:%M:%S")    
+    })
+  artist_data['previous_shows'] = previous_show_array
+  artist_data['future_shows'] = future_shows_array
   artist_data['previous_shows_count'] = len(previous_shows)
   artist_data['future_shows_count'] = len(future_shows)
   
